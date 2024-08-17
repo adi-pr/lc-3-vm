@@ -30,4 +30,10 @@ typedef enum {
   OP_RES,     /* reserved (used) */
   OP_LEA,     /* load effective address */
   OP_TRAP     /* exectue trap */
-} InstructionSet;
+} Opcodes;
+
+typedef enum {
+  FL_POS = 1 << 0; 
+  FL_ZRO = 1 << 1;
+  FL_NEG = 1 << 2, 
+} ConditionalFlags;
