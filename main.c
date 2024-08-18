@@ -1,3 +1,4 @@
+#include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <signal.h>
@@ -16,15 +17,20 @@ uint16_t memory[MEMORY_MAX]; /* 65536 memory locations */
 
 struct termios original_tio; 
 
-/* prototypes */
+/* input buffering prototypes */
 void handle_interrupt(int signal);
 void disable_input_buffering();
 void restore_input_buffering();
 uint16_t check_key();
 
+/* read image prototypes */
 void read_image_file(FILE* file);
 uint16_t swap16(uint16_t x);
 int read_image(const char* image_path);
+
+/* memory access prototypes */
+void mem_write(uint16_t address, uint16_t val);
+uint16_t mem_read(uint16_t address); 
 
 typedef enum {
   R_R0 = 0, R_R1, R_R2, R_R3, R_R4, R_R5, R_R6, R_R7, /* general registers */ 
@@ -34,6 +40,11 @@ typedef enum {
 } Registers;
 
 uint16_t registers[R_COUNT];
+
+typedef enum {
+  MR_KBSR = 0xFE00, /* keyboard status */
+  MR_KBDA = 0xFE02, /* keyboard data */
+} MemoryMappedRegisters;
 
 typedef enum {
   OP_BR = 0,  /* branch */ 
@@ -113,6 +124,16 @@ int main(int argc, const char* argv[]) {
         break;
       case OP_STI:
         break;
+      case OP_STR:
+        break;
+      case OP_TRAP:
+        break;
+      case OP_RES:
+        break;
+      case OP_RTI:
+        break;
+      default:
+        break;
     }
   }
 
@@ -177,6 +198,21 @@ int read_image(const char* image_path) {
   return 1; 
 }
 
+void mem_write(uint16_t address, uint16_t val) {
+  memory[address] = val;
+}
 
+uint16_t mem_read(uint16_t address) {
+  if (address == MR_KBSR) {
+    if (check_key()) {
+      memory[MR_KBSR] = (1 << 15);
+      memory[MR_KBSR] = getchar();
+    }
+    else {
+      memory[MR_KBSR] = 0;
+    }
+  }
+  return memory[address];
+}
 
 
