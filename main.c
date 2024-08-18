@@ -1,8 +1,30 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <signal.h>
+/* unix only */
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/termios.h>
+#include <sys/mman.h>
 
 #define MEMORY_MAX (1 << 16)
 uint16_t memory[MEMORY_MAX]; /* 65536 memory locations */
+
+struct termios original_tio; 
+
+/* prototypes */
+void handle_interrupt(int signal);
+void disable_input_buffering();
+void restore_input_buffering();
+uint16_t check_key();
+
+void read_image_file(FILE* file);
+uint16_t swap16(uint16_t x);
+int read_image(const char* image_path);
 
 typedef enum {
   R_R0 = 0, R_R1, R_R2, R_R3, R_R4, R_R5, R_R6, R_R7, /* general registers */ 
@@ -33,7 +55,89 @@ typedef enum {
 } Opcodes;
 
 typedef enum {
-  FL_POS = 1 << 0; 
-  FL_ZRO = 1 << 1;
+  FL_POS = 1 << 0, 
+  FL_ZRO = 1 << 1,
   FL_NEG = 1 << 2, 
 } ConditionalFlags;
+
+int main(int argc, const char* argv[]) {
+  if (argc < 2) {
+    /* show usage string */
+    printf("lc3 [image-file1] ...\n"); 
+    exit(2); 
+  }
+
+  for (int j = 1; j < argc; ++j) {
+    if (!read_image(argv[j])) {
+      printf("failed to load image: %s\n", argv[j]);
+      exit(1);
+    }
+  }
+
+  signal(SIGINT, handle_interrupt);
+  disable_input_buffering(); 
+
+  return 0;
+}
+
+void handle_interrupt(int signal) {
+  restore_input_buffering(); 
+  printf("\n");
+  exit(-2);
+}
+
+void disable_input_buffering() {
+  tcgetattr(STDIN_FILENO, &original_tio);
+  struct termios new_tio = original_tio; 
+  new_tio.c_lflag &= ~ICANON & ~ECHO;
+  tcsetattr(STDIN_FILENO, TCSANOW, &new_tio);
+}
+
+void restore_input_buffering() {
+  tcsetattr(STDIN_FILENO, TCSANOW, &original_tio);
+}
+
+uint16_t check_key()
+{
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(STDIN_FILENO, &readfds);
+
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+    return select(1, &readfds, NULL, NULL, &timeout) != 0;
+}
+
+void read_image_file(FILE* file) {
+  /* the orgin is where in memory to place the image */
+  uint16_t orgin;
+  fread(&orgin, sizeof(orgin), 1, file);
+  orgin = swap16(orgin); 
+
+  uint16_t max_read = MEMORY_MAX - orgin; 
+  uint16_t* p = memory + orgin;
+  size_t read = fread(p, sizeof(uint16_t), max_read, file);
+
+  /* swap to little endian */
+  while (read-- > 0) {
+    *p = swap16(*p);
+    ++p;
+  }
+}
+
+uint16_t swap16(uint16_t x) {
+  return (x << 8) | (x >> 8); 
+}
+
+int read_image(const char* image_path) {
+  FILE* file = fopen(image_path, "rb");
+  if (!file) { return 0; };
+  read_image_file(file);
+  fclose(file);
+  return 1; 
+}
+
+
+
+

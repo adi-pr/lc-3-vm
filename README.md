@@ -1,2 +1,2 @@
-# lc-3-vm
+# LC-3 Emmulator
 
