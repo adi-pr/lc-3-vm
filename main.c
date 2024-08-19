@@ -32,6 +32,8 @@ int read_image(const char* image_path);
 void mem_write(uint16_t address, uint16_t val);
 uint16_t mem_read(uint16_t address); 
 
+uint16_t sign_extended(uint16_t x, int bit_count);
+
 typedef enum {
   R_R0 = 0, R_R1, R_R2, R_R3, R_R4, R_R5, R_R6, R_R7, /* general registers */ 
   R_PC, /* program counter */
@@ -140,6 +142,7 @@ int main(int argc, const char* argv[]) {
   return 0;
 }
 
+/* Input buffering */
 void handle_interrupt(int signal) {
   restore_input_buffering(); 
   printf("\n");
@@ -169,6 +172,7 @@ uint16_t check_key()
     return select(1, &readfds, NULL, NULL, &timeout) != 0;
 }
 
+/* Image file handlers */
 void read_image_file(FILE* file) {
   /* the orgin is where in memory to place the image */
   uint16_t orgin;
@@ -198,6 +202,8 @@ int read_image(const char* image_path) {
   return 1; 
 }
 
+
+/* Memory Access */
 void mem_write(uint16_t address, uint16_t val) {
   memory[address] = val;
 }
@@ -215,4 +221,13 @@ uint16_t mem_read(uint16_t address) {
   return memory[address];
 }
 
+/* Extends the sign of an integer from bit_count bits to a 16-bit uint16_t. */
+uint16_t sign_extended(uint16_t x, int bit_count) {
+  if(( x >> (bit_count - 1)) & 1) {
+    x |= (0xFFFF << bit_count); 
+  }
 
+  return x;
+}
+
+/* Opcodes */
