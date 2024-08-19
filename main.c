@@ -32,6 +32,11 @@ int read_image(const char* image_path);
 void mem_write(uint16_t address, uint16_t val);
 uint16_t mem_read(uint16_t address); 
 
+/* flags prototype */
+void update_flags(uint16_t r);
+
+/* opcode prototypes */
+
 uint16_t sign_extended(uint16_t x, int bit_count);
 
 typedef enum {
@@ -103,9 +108,28 @@ int main(int argc, const char* argv[]) {
 
     switch(op) {
       case OP_ADD:
+        /* destination register (DR)*/
+        uint16_t r0 = (instr >> 9) & 0x7;
+        /* first operand (SR1) */
+        uint16_t r1 = (instr >> 6) & 0x7;
+        /* immediate mode check */
+        uint16_t imm_flag = (instr >> 5) & 0x1;
+
+        if (imm_flag) {
+          uint16_t imm5 = sign_extended(instr & 0x1F, 5);
+          registers[r0] = registers[r1] + imm5;
+        } 
+        else {
+          uint16_t r2 = instr & 0x7;
+          registers[r0] = registers[r1] + registers[r2];
+        }
+
+        update_flags(r0);
         break;
+
       case OP_AND:
         break;
+        
       case OP_NOT:
         break;
       case OP_BR:
@@ -221,6 +245,18 @@ uint16_t mem_read(uint16_t address) {
   return memory[address];
 }
 
+void update_flags(uint16_t r) {
+  if (registers[r] == 0) {
+    registers[R_COND] = FL_ZRO; 
+  }
+  else if (registers[r] >> 15) {
+    registers[R_COND] = FL_NEG;
+  }
+  else {
+    registers[R_COND] = FL_POS; 
+  }
+}
+
 /* Extends the sign of an integer from bit_count bits to a 16-bit uint16_t. */
 uint16_t sign_extended(uint16_t x, int bit_count) {
   if(( x >> (bit_count - 1)) & 1) {
@@ -230,4 +266,5 @@ uint16_t sign_extended(uint16_t x, int bit_count) {
   return x;
 }
 
-/* Opcodes */
+/* Opcode Functions */
+
