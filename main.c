@@ -181,7 +181,7 @@ int main(int argc, const char *argv[])
 
       update_flags(r0);
       break;
-      
+
     case OP_BR:
       /* PCoffset 9 */
       uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
@@ -193,12 +193,19 @@ int main(int argc, const char *argv[])
       }
 
       break;
+
     case OP_JMP:
+      /* BaseR */
+      uint16_t base_r = (instr >> 6) & 0x7; 
+      registers[R_PC] = base_r; 
       break;
+
     case OP_JSR:
       break;
+
     case OP_LD:
       break;
+      
     case OP_LDI:
       /* destination register (DR) */
       uint16_t r0 = (instr >> 9) & 0x7;
