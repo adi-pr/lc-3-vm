@@ -68,7 +68,7 @@ typedef enum
   OP_ADD,    /* add */
   OP_LD,     /* load */
   OP_ST,     /* store */
-  OP_JSR,    /* jump register */
+  OP_JSR,    /* jump to subroutine */
   OP_AND,    /* bitwise and */
   OP_LDR,    /* load register */
   OP_STR,    /* store register */
@@ -196,16 +196,32 @@ int main(int argc, const char *argv[])
 
     case OP_JMP:
       /* BaseR */
-      uint16_t base_r = (instr >> 6) & 0x7; 
-      registers[R_PC] = base_r; 
+      uint16_t base_r = (instr >> 6) & 0x7;
+      registers[R_PC] = base_r;
       break;
 
     case OP_JSR:
+      /* condition flag */
+      uint16_t cond_flag = (instr >> 11) & 0x1;
+      registers[R_R7] = registers[R_PC];
+
+      if (!cond_flag)
+      {
+        uint16_t base_r = (instr >> 6) & 0x7;
+        registers[R_PC] = base_r; /* JSRR */
+      }
+      else
+      {
+        /* PCoffset 11 */
+        uint16_t pc_offset = sign_extended(instr & 0x1FF, 11);
+        registers[R_PC] += pc_offset; /* JSR */
+      }
+
       break;
 
     case OP_LD:
       break;
-      
+
     case OP_LDI:
       /* destination register (DR) */
       uint16_t r0 = (instr >> 9) & 0x7;
