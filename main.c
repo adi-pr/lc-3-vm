@@ -167,6 +167,7 @@ int main(int argc, const char *argv[])
         uint16_t r2 = instr & 0x7;
         registers[r0] = registers[r1] & registers[r2];
       }
+
       update_flags(r0);
       break;
 
@@ -177,9 +178,20 @@ int main(int argc, const char *argv[])
       uint16_t r1 = (instr >> 6) & 0x7;
 
       registers[r0] = ~r1;
-      update_flags(r0); 
+
+      update_flags(r0);
       break;
+      
     case OP_BR:
+      /* PCoffset 9 */
+      uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
+      /* condition flag */
+      uint16_t cond_flag = (instr >> 9) & 0x7;
+      if (cond_flag & registers[R_COND])
+      {
+        registers[R_PC] += pc_offset;
+      }
+
       break;
     case OP_JMP:
       break;
@@ -190,7 +202,7 @@ int main(int argc, const char *argv[])
     case OP_LDI:
       /* destination register (DR) */
       uint16_t r0 = (instr >> 9) & 0x7;
-      /* PCoffsrt 9 */
+      /* PCoffset 9 */
       uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
 
       /* add pc_offset to the current PC, look at that memory location to get the final address */
