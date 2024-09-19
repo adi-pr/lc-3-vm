@@ -208,7 +208,7 @@ int main(int argc, const char *argv[])
       if (!cond_flag)
       {
         uint16_t base_r = (instr >> 6) & 0x7;
-        registers[R_PC] = base_r; /* JSRR */
+        registers[R_PC] = base_r; /* JSRR (Jump to SubRoutine Register) */
       }
       else
       {
@@ -220,6 +220,14 @@ int main(int argc, const char *argv[])
       break;
 
     case OP_LD:
+      /* destination register (DR) */
+      uint16_t r0 = (instr >> 9) & 0x7;
+      /* PCoffset 9*/
+      uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
+
+      registers[r0] = mem_read(registers[R_PC] + pc_offset);
+
+      update_flags(r0);
       break;
 
     case OP_LDI:
