@@ -259,15 +259,36 @@ int main(int argc, const char *argv[])
       /* PCoffset 9 */
       uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
 
-      registers[r0] = registers[R_PC] + pc_offset; 
+      registers[r0] = registers[R_PC] + pc_offset;
 
       update_flags(r0);
       break;
     case OP_ST:
+      /* destination register (SR) */
+      uint16_t r0 = (instr >> 9) & 0x7;
+      /* PCoffset 9 */
+      uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
+      mem_write(registers[R_PC + pc_offset], registers[r0]);
       break;
     case OP_STI:
+      /* destination register (SR) */
+      uint16_t r0 = (instr >> 9) & 0x7;
+      /* PCoffset 9 */
+      uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
+      
+      mem_write(mem_read(registers[R_PC + pc_offset]), registers[r0]);
+
       break;
     case OP_STR:
+      /* destination register (SR) */
+      uint16_t r0 = (instr >> 9) & 0x7;
+      /* BaseR */
+      uint16_t r1 = (instr >> 6) & 0x7;
+      /* Offset6 */
+      uint16_t offset = sign_extended(instr & 0x1FF, 6);
+
+      mem_write(registers[r1] + offset, registers[r0]);
+
       break;
     case OP_TRAP:
       break;
