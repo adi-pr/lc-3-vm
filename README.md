@@ -95,6 +95,10 @@ LC-3 image files can be loaded using the `read_image` function. This function re
 - `restore_input_buffering()`: Restores terminal input buffering.
 - `handle_interrupt(int signal)`: Signal handler for `SIGINT`.
 
+## Credits
+
+The LC-3 instruction set and architectural details are based on the [LC-3 Instruction Set Architecture](https://www.jmeiners.com/lc3-vm/supplies/lc3-isa.pdf) by J. Meiners & R. Pendleton. This virtual machine is an implementation inspired by the design described in this document.
+
 ## License
 
 This project is open source. You are free to use, modify, and distribute the code as needed.
