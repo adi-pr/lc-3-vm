@@ -242,8 +242,26 @@ int main(int argc, const char *argv[])
       update_flags(r0);
       break;
     case OP_LDR:
+      /* destination register (DR) */
+      uint16_t r0 = (instr >> 9) & 0x7;
+      /* BaseR */
+      uint16_t r1 = (instr >> 6) & 0x7;
+      /* Offset6 */
+      uint16_t offset = sign_extended(instr & 0x1FF, 6);
+
+      registers[r0] = mem_read(registers[r1] + offset);
+
+      update_flags(r0);
       break;
     case OP_LEA:
+      /* destination register (DR) */
+      uint16_t r0 = (instr >> 9) & 0x7;
+      /* PCoffset 9 */
+      uint16_t pc_offset = sign_extended(instr & 0x1FF, 9);
+
+      registers[r0] = registers[R_PC] + pc_offset; 
+
+      update_flags(r0);
       break;
     case OP_ST:
       break;
@@ -384,5 +402,3 @@ uint16_t sign_extended(uint16_t x, int bit_count)
 
   return x;
 }
-
-/* Opcode Functions */
